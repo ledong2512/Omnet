@@ -373,7 +373,7 @@ void Nodes::finish(){
         FILE *gnplt = popen("c:\\gnuplot\\bin\\gnuplot","w");
 
               // fprintf(gnplt,"plot sin(x) \n");
-        EV<<"plot \"E:\\output.txt\"  matrix u ($1*100):($0*100/8) every 1::1 with lines ls 2  \n";
+        EV<<"plot \"D:\\output.txt\"  matrix u ($1*100):($0*100/8) every 1::1 with lines ls 2  \n";
         fprintf(gnplt,"set xlabel \"Time(ns)\" \n");
         fprintf(gnplt,"set ylabel \"Throughtput(%)\" \n");
          fprintf(gnplt,"plot \"D:/output.txt\"  matrix u ($1*100):($0*100/16) every 1::1 with lines ls 2  \n");
