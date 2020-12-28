@@ -5,7 +5,7 @@ simple Nodes
 		int type;
 		int des = default(-1);
 		int k = 4;
-		int EXB_SIZE=default(10);
+		int EXB_SIZE=default(5);
 		double TIMEOUT @unit(s)=default(1.0s);
 		double TIME_INTERVAL @unit(s)=default(0.1ms);
 		double CHANNEL_DELAY @unit(s)=default(0.0001s);
