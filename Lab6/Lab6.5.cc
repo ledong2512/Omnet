@@ -26,6 +26,7 @@ private:
     double CHANNEL_DELAY;
     double CREDIT_DELAY;
     double TIME_OPERATION_OF_SWITCH;
+    double TIME_UPDATE;
     int arrayLength;
 
     FatTreeRoutingAlgorithm* ftra;
@@ -72,12 +73,13 @@ void Nodes::initialize(){
     CREDIT_DELAY = par("CREDIT_DELAY").doubleValue();
     TIME_GEN_MSG = par("TIME_GEN_MSG").doubleValue();
     CHANNEL_DELAY = par("CHANNEL_DELAY").doubleValue();
+    TIME_UPDATE=par("TIME_UPDATE").doubleValue();
     TIME_OPERATION_OF_SWITCH = par("TIME_OPERATION_OF_SWITCH").doubleValue();
     type = par("type").intValue();
     if (type == 2){
         k = par("k").intValue();
         fatTreeGraph = FatTreeGraph(k);
-        ftra = new FatTreeRoutingAlgorithm(fatTreeGraph, true);
+        ftra = new FatTreeRoutingAlgorithm(fatTreeGraph, false);
         ftra->PrintTables();
         //(ftra->path(10, 25)).PrintPath();
         //fatTreeGraph.printAddress();
@@ -89,6 +91,7 @@ void Nodes::initialize(){
             channelStatus[index] = false;
         }
         scheduleAt(0 + TIME_OPERATION_OF_SWITCH, new cMessage("nextPeriod"));
+        scheduleAt(0 + TIME_UPDATE, new cMessage("nextUpdate"));
         scheduleAt(0 + CHANNEL_DELAY, new cMessage("send"));
     }
     if (type == 1||type ==3){
@@ -207,6 +210,10 @@ void Nodes::switches(cMessage *msg){
     const char * eventName = msg->getName();
     //chuy盻ハ gﾃｳi tin vﾃ�o ENB tﾆｰﾆ｡ng 盻ｩng khi switch nh蘯ｭn ﾄ柁ｰ盻｣c gﾃｳi tin
     if(!strcmp(eventName, "sender to receiver")){
+        sendMsg *ttmsg;
+        ttmsg = check_and_cast<sendMsg *>(msg);
+
+        //ftra->makePath(ttmsg->getSource(),ttmsg->getDestination(),getIndex());
         int index = msg->getSenderModule()->getIndex();
         queue<cMessage *> temp;
         if (ENB[index].empty()){
@@ -224,9 +231,15 @@ void Nodes::switches(cMessage *msg){
             sendToExitBuffer_SW();
         }
         //
-        ftra->shufflerPort(getIndex());
+        //ftra->shufflerPort(getIndex());
         scheduleAt(simTime() + TIME_OPERATION_OF_SWITCH, msg);
     }
+    if(!strcmp(eventName, "nextUpdate")){
+
+            ftra->shufflerPort(getIndex());
+          //  ftra->printPath(getIndex());
+            scheduleAt(simTime() + TIME_UPDATE, msg);
+        }
     //tﾄハg buffer khi nh蘯ｭn ﾄ柁ｰ盻｣c tﾃｭn hi盻㎡ t盻ｫ nﾃｺt k盻� tﾆｰﾆ｡ng 盻ｩng sau kho蘯｣ng th盻拱 gian CREDIT_DELAY
     if (!strcmp(eventName, "inc buffer")){
         cMessage *sendMsg = new cMessage("incbuff");
@@ -306,6 +319,10 @@ void Nodes::sendToNextNode(){
             if (!EXB[index].empty()){
                 sizeOfNextENB[index]--;
                 cMessage * mess = EXB[index].front()->dup();
+                if(getIndex()==6){
+                    int i=0;
+
+                }
                 ftra->increaseTraficPorts(i, getIndex());
                 sendMsg* ttmsg = check_and_cast<sendMsg *>(mess);
                 ftra->increaseTraficTables(ttmsg->getSource(),ttmsg->getDestination(),getIndex());
@@ -362,10 +379,11 @@ void Nodes::finish(){
         fileOutput.close();
         cout << "Node " << getIndex() << " received : "  << sumMsg << " message." <<  endl;
         EV << "Node " << getIndex() << " received : "  << sumMsg << " message." <<  "\n";
-        for (int i = 0; i < arrayLength; i++) {
-                    EV << int(receivedMsgCount[i] + preArr[i]) << " ";
-                }
-        EV<<"\n";
+        //for (int i = 0; i < arrayLength; i++) {
+               //     EV << int(receivedMsgCount[i] + preArr[i]) << " ";
+               // }
+       // EV<<"\n";
+
     }
     //return;
     if(fin==36){
@@ -373,7 +391,7 @@ void Nodes::finish(){
         FILE *gnplt = popen("c:\\gnuplot\\bin\\gnuplot","w");
 
               // fprintf(gnplt,"plot sin(x) \n");
-        EV<<"plot \"E:\\output.txt\"  matrix u ($1*100):($0*100/8) every 1::1 with lines ls 2  \n";
+        EV<<"plot \"D:\\output.txt\"  matrix u ($1*100):($0*100/8) every 1::1 with lines ls 2  \n";
         fprintf(gnplt,"set xlabel \"Time(ns)\" \n");
         fprintf(gnplt,"set ylabel \"Throughtput(%)\" \n");
          fprintf(gnplt,"plot \"D:/output.txt\"  matrix u ($1*100):($0*100/16) every 1::1 with lines ls 2  \n");

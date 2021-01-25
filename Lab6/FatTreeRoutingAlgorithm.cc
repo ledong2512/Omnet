@@ -1,12 +1,8 @@
-/*
- * FatTreeRoutingAlgorithm.cc
- *
- *  Created on: Apr 25, 2020
- *      Author: hongt
- */
-
 #include "FatTreeRoutingAlgorithm.h"
 #include <omnetpp.h>
+#include<stdio.h>
+#include <time.h>
+#include <stdlib.h>
 using namespace omnetpp;
 using namespace std;
 FatTreeRoutingAlgorithm::FatTreeRoutingAlgorithm(FatTreeGraph G, bool precomputed) {
@@ -28,6 +24,10 @@ void FatTreeRoutingAlgorithm::buildTables(){
     // TODO - build prefix - suffix routing table
     int k = G.getK();
     int numEachPod = k * k / 4 + k;
+//    for(int i=0;i<40;i++){
+//        flowTraficPorts[i][2]=0;
+//        flowTraficPorts[i][3]=0;
+//    }
 
     //edge switches
     for (int p = 0; p < k; p++){
@@ -37,7 +37,7 @@ void FatTreeRoutingAlgorithm::buildTables(){
             //create suffix table
             map<int, int> suffixTable;
             for(int suffix = 2; suffix <= k/2 + 1; suffix++){
-                int agg = offset + k * k / 4 + (e + suffix -2) % (k / 2) + (k / 2);
+                int agg = offset + k * k / 4 + (0+ suffix -2) % (k / 2) + (k / 2);
                 suffixTable.insert(pair<int, int>(suffix, agg));
             }
             suffixTables.insert(pair<int,map<int, int>>(edgeSwitch, suffixTable));
@@ -158,13 +158,15 @@ int FatTreeRoutingAlgorithm::next(int source, int current, int destination) {
                 return prefixTable[prefix];
             }
             else {
-                //return suffixTable[suffix];
+//                srand((int)time(0));
+//                suffix=2+rand()%2;
+               //return suffixTable[suffix];
                 if(flowTable.find(make_pair(source,destination))==flowTable.end()){
-                    flowTables[current][make_pair(source,destination)]=suffixTable[suffix];
-                    return suffixTable[suffix];
-                }
-                else
-                    return flowTable[make_pair(source,destination)];
+                                flowTables[current][make_pair(source,destination)]=suffixTable[suffix];
+                                    return suffixTable[suffix];
+                                            }
+                            else
+                                    return flowTables[current][make_pair(source,destination)];
             }
         }
         else { // Edge switch
@@ -174,13 +176,15 @@ int FatTreeRoutingAlgorithm::next(int source, int current, int destination) {
 
             map<int, int> suffixTable = suffixTables[current];
             map< pair<int,int>,int> flowTable=flowTables[current];
+//            srand((int)time(0));
+//            suffix=2+rand()%2;
             //return suffixTable[suffix];
             if(flowTable.find(make_pair(source,destination))==flowTable.end()){
                 flowTables[current][make_pair(source,destination)]=suffixTable[suffix];
                     return suffixTable[suffix];
                             }
             else
-                    return flowTable[make_pair(source,destination)];
+                    return flowTables[current][make_pair(source,destination)];
         }
     }
 }
@@ -205,43 +209,163 @@ RoutingPath FatTreeRoutingAlgorithm::path(int source, int destination) {
 }
 
 void FatTreeRoutingAlgorithm::increaseTraficPorts(int port,int current){// tăng bộ đếm số lần gói tin đi qua cổng (chỉ cần quan tâm cổng 2 và 3)
-    if(port==2||port==3)
+    int k = G.getK();
+    if(port>=k/2&&port<k)
+    //if(port==2||port==3)
     flowTraficPorts[current][port]++;
 }
 void FatTreeRoutingAlgorithm::increaseTraficTables(int source,int destination,int current){// tăng bộ đếm số lần 1 cặp nguồn đích được chuyển đi
-    flowTraficTables[current][make_pair(source,destination)]++;
+    //flowTraficTables[current][make_pair(source,destination)]++;
+
+    if (G.isHostVertex(current)) {
+           return ;
+       }
+       else if (std::find(G.adj[current].begin(), G.adj[current].end(), destination) != G.adj[current].end()) {
+           return ;
+       }
+       else {
+           int type = G.switchType(current);
+           if (type == FatTreeGraph::CORE) {
+               return ;
+           }
+           else if (type == FatTreeGraph::AGG) {
+               Address address = G.getAddress(destination);
+
+               int prefix = (address._1 << 16) | (address._2 << 8) | address._3;
+               int suffix = address._4;
+
+               map<int, int> prefixTable = prefixTables[current];
+               map<int, int> suffixTable = suffixTables[current];
+               map< pair<int,int>,int> flowTable=flowTables[current];
+               if (prefixTable.count(prefix)) {
+                   return ;
+               }
+               else {
+                   flowTraficTables[current][make_pair(source,destination)]++;
+               }
+           }
+           else { // Edge switch
+
+               flowTraficTables[current][make_pair(source,destination)]++;
+           }
+       }
+
+
 
 }
 void FatTreeRoutingAlgorithm::shufflerPort(int current){// tính toán lại để chuyển hướng các luồng giá trị ra
     int minn=9999999,maxx=0;
     int idxMin=0,idxMax=0;
+    int k = G.getK();
     map<int,int> flowTraficPort=flowTraficPorts[current];
-    maxx=flowTraficPort[2];idxMax=2;
-    minn=flowTraficPort[3];idxMin=3;
-    if(flowTraficPort[2]<flowTraficPort[3]){
-        maxx=flowTraficPort[3];idxMax=3;
-        minn=flowTraficPort[2];idxMin=2;
-    }
+    for(int i=k/2;i<k;i++){
+        if(flowTraficPort[i]>maxx){
+            idxMax=i;
+            maxx=flowTraficPort[i];
+        }
+        if(flowTraficPort[i]<minn){
+            idxMin=i;
+            minn=flowTraficPort[i];
+             }
 
-    EV<<flowTraficPort[2]<<" "<<flowTraficPort[3]<<"\n";
+    }
+//    maxx=flowTraficPort[2];idxMax=2;
+//    minn=flowTraficPort[3];idxMin=3;
+//    if(flowTraficPort[2]<flowTraficPort[3]){
+//        maxx=flowTraficPort[3];idxMax=3;
+//        minn=flowTraficPort[2];idxMin=2;
+//    }
     int d=maxx-minn;
-    EV<<d<<"\n ";
-    pair<int,int> tmp;
+
+    pair<int,int> tmp,array[10];
+    int count=0;
     bool check=false;
     map<pair<int,int>,int> flowTraficTable=flowTraficTables[current];
+    map<pair<int,int>,int> flowTable=flowTables[current];
     for(map<pair<int,int>,int>::iterator it = flowTraficTable.begin(); it != flowTraficTable.end(); it++){
         if(it->second<d&&flowTables[current][it->first]==suffixTables[current][idxMax]){
             tmp=it->first;
             check=true;
+
+          // break;
         }
     }
     if(check){
-        flowTraficPorts[current][3]=0;flowTraficPorts[current][2]=0;
-        for(map<pair<int,int>,int>::iterator it = flowTraficTable.begin(); it != flowTraficTable.end(); it++){
-            flowTraficTables[current][it->first]=0;
-        }
-        EV<<flowTraficTable[tmp]<<" "<<d<<"\n";
+
+        EV<<"Node: "<<tmp.first<<" "<<tmp.second<<" "<<idxMax<<"\n";
         flowTables[current][tmp]=suffixTables[current][idxMin];
 
+
     }
+    flowTraficPorts[current][3]=0;flowTraficPorts[current][2]=0;
+              flowTraficTables[current].clear();
+}
+void FatTreeRoutingAlgorithm::printPath(int current){
+    if(flowTables.find(current)==flowTables.end()) return;
+    map<pair<int,int>,int> flowTable=flowTables[current];
+    for(map<pair<int,int>,int>::iterator it =flowTable.begin(); it !=flowTable.end(); it++){
+        EV<<"Node: "<<it->first.first<<" "<<it->first.second<<" "<<it->second<<"\n";
+        }
+}
+void FatTreeRoutingAlgorithm::makePath(int source,int destination,int current){
+    if (G.isHostVertex(current)) {
+               return ;
+           }
+           else if (std::find(G.adj[current].begin(), G.adj[current].end(), destination) != G.adj[current].end()) {
+               return ;
+           }
+           else {
+               int type = G.switchType(current);
+               if (type == FatTreeGraph::CORE) {
+                   return ;
+               }
+               else if (type == FatTreeGraph::AGG) {
+                   Address address = G.getAddress(destination);
+
+                   int prefix = (address._1 << 16) | (address._2 << 8) | address._3;
+                   int suffix = address._4;
+
+                   map<int, int> prefixTable = prefixTables[current];
+                   map<int, int> suffixTable = suffixTables[current];
+                   map< pair<int,int>,int> flowTable=flowTables[current];
+                   if (prefixTable.count(prefix)) {
+                       return ;
+                   }
+                   else {
+                       int minn=9999999,maxx=0;
+                          int idxMin=0,idxMax=0;
+                          map<int,int> flowTraficPort=flowTraficPorts[current];
+                          maxx=flowTraficPort[2];idxMax=2;
+                          minn=flowTraficPort[3];idxMin=3;
+                          if(flowTraficPort[2]<flowTraficPort[3]){
+                              maxx=flowTraficPort[3];idxMax=3;
+                              minn=flowTraficPort[2];idxMin=2;
+                          }
+                           suffix=idxMin;
+
+                           if(flowTable.find(make_pair(source,destination))==flowTable.end())
+                                      flowTables[current][make_pair(source,destination)]=suffixTable[suffix];
+                   }
+               }
+               else { // Edge switch
+                   Address address = G.getAddress(destination);
+                               int suffix = address._4;
+
+                               map<int, int> suffixTable = suffixTables[current];
+                               map< pair<int,int>,int> flowTable=flowTables[current];
+                               int minn=9999999,maxx=0;
+                                  int idxMin=0,idxMax=0;
+                                  map<int,int> flowTraficPort=flowTraficPorts[current];
+                                  maxx=flowTraficPort[2];idxMax=2;
+                                  minn=flowTraficPort[3];idxMin=3;
+                                  if(flowTraficPort[2]<flowTraficPort[3]){
+                                      maxx=flowTraficPort[3];idxMax=3;
+                                      minn=flowTraficPort[2];idxMin=2;
+                                  }
+                                             suffix=idxMin;
+
+                                         if(flowTable.find(make_pair(source,destination))==flowTable.end())
+                                                        flowTables[current][make_pair(source,destination)]=suffixTable[suffix];
+               }
+           }
 }

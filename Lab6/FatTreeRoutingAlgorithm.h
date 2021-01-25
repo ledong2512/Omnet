@@ -34,8 +34,8 @@ private:
     map<int, map<int,int>> prefixTables;
     map<int, map<int,int>> corePrefixTables;
     map<int, map< pair<int,int>,int>> flowTables; //map từ 1 cặp nguồn đích đến ip đầu ra
-    map<int, map<int,int>> flowTraficPorts;
-    map<int, map< pair<int,int>,int>> flowTraficTables;
+    map<int, map<int,int>> flowTraficPorts;// map số lần có gói tin đi ra của 1 cổng
+    map<int, map< pair<int,int>,int>> flowTraficTables;// map giá trị flow của 1 cặp nguồn đích
 public:
     FatTreeRoutingAlgorithm(FatTreeGraph G, bool precomputed);
     void buildTables();
@@ -44,6 +44,8 @@ public:
     void increaseTraficPorts(int port,int current);
     void increaseTraficTables(int source,int des,int current);
     void shufflerPort(int curent);
+    void printPath(int current);
+    void makePath(int source,int des,int current);
     RoutingPath path(int source, int destination);
 };
 

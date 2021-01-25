@@ -5,13 +5,15 @@ simple Nodes
 		int type;
 		int des = default(-1);
 		int k = 4;
-		int EXB_SIZE=default(10);
+		int EXB_SIZE=default(5);
 		double TIMEOUT @unit(s)=default(1.0s);
 		double TIME_INTERVAL @unit(s)=default(0.1ms);
 		double CHANNEL_DELAY @unit(s)=default(0.0001s);
 		double CREDIT_DELAY @unit(s)=default(1.0ns);
 		double TIME_GEN_MSG @unit(s)=default(0.1ms);
 		double TIME_OPERATION_OF_SWITCH @unit(s)=default(1000.0ns);
+		//double TIME_UPDATE @unit(s)=default(100.0ns);
+		double TIME_UPDATE @unit(s)=default(0.05s);
 	gates:
 		input in[4];
 		output out[4];
@@ -57,31 +59,57 @@ network fattree
 		Node[10].type = 1;
 		Node[25].type = 3;
 
-		//Node[11].des = 8;
-		//Node[27].des = 1;
-		//Node[3].des = 9;
-		//Node[26].des = 17;
-		//Node[19].des = 18;
-		//Node[0].des = 2;
-		//Node[16].des = 24;
-		//Node[10].des = 25;
-		
-		Node[0].des = 11;
-		Node[1].des = 19;
-		Node[2].des = 8;
-		Node[3].des = 24;
-		Node[8].des = 17;
-		Node[9].des = 25;
-		Node[10].des = 2;
-		Node[11].des = 18;
-		Node[16].des = 9;
-		Node[17].des = 27;
-		Node[18].des = 0;
-		Node[19].des = 26;
-		Node[24].des = 1;
-		Node[25].des = 3;
-		Node[26].des = 16;
-		Node[27].des = 10;
+		Node[11].des = 8;
+		Node[27].des = 1;
+		Node[3].des = 9;
+		Node[26].des = 24;
+		Node[19].des = 18;
+		Node[0].des = 2;
+		Node[16].des = 17;
+		Node[10].des = 25;
+		Node[8].des = 11;
+		Node[1].des = 27;
+		Node[9].des = 3;
+		Node[17].des = 16;
+		Node[18].des = 19;
+		Node[2].des = 0;
+		Node[24].des = 26;
+		Node[25].des = 10;
+//		
+//		
+//		Node[0].des = 11;
+//		Node[1].des = 19;
+//		Node[2].des = 8;
+//		Node[3].des = 24;
+//		Node[8].des = 17;
+//		Node[9].des = 25;
+//		Node[10].des = 2;
+//		Node[11].des = 18;
+//		Node[16].des = 9;
+//		Node[17].des = 27;
+//		Node[18].des = 0;
+//		Node[19].des = 26;
+//		Node[24].des = 1;
+//		Node[25].des = 3;
+//		Node[26].des = 16;
+//		Node[27].des = 10;
+
+//		Node[0].des = 1;
+//		Node[1].des = 2;
+//		Node[2].des = 3;
+//		Node[3].des = 8;
+//		Node[8].des = 9;
+//		Node[9].des = 10;
+//		Node[10].des = 11;
+//		Node[11].des = 16;
+//		Node[16].des = 17;
+//		Node[17].des = 18;
+//		Node[18].des = 19;
+//		Node[19].des = 24;
+//		Node[24].des = 25;
+//		Node[25].des = 26;
+//		Node[26].des = 27;
+//		Node[27].des = 0;
 	types:
 		 channel Channel extends ned.DatarateChannel {
 			datarate = 1Gbps;
@@ -97,6 +125,18 @@ network fattree
 			Node[int(8*p + 4*4/4 + e)].out++ --> Channel --> Node[int(8*p + 4*4/4 + s)].in++;
 			Node[int(8*p + 4*4/4 + e)].in++ <-- Channel <-- Node[int(8*p + 4*4/4 + s)].out++;
 		}
+//		for p=0..3, for s=2..3{
+//			Node[int(8*p + 4*4/4 )].out++ --> Channel --> Node[int(8*p + 4*4/4 + s)].in++;
+//			Node[int(8*p + 4*4/4 )].in++ <-- Channel <-- Node[int(8*p + 4*4/4 + s)].out++;
+//		}
+//		for p=0..3{
+//			Node[int(8*p + 4*4/4 + 1)].out++ --> Channel --> Node[int(8*p + 4*4/4 + 3)].in++;
+//			Node[int(8*p + 4*4/4 + 1)].in++ <-- Channel <-- Node[int(8*p + 4*4/4 + 3)].out++;
+//			Node[int(8*p + 4*4/4 + 1)].out++ --> Channel --> Node[int(8*p + 4*4/4 + 2)].in++;
+//			Node[int(8*p + 4*4/4 + 1)].in++ <-- Channel <-- Node[int(8*p + 4*4/4 + 2)].out++;
+//		}
+		
+		
 		for p=0..3, for e=0..1, for s=0..1{
 			Node[int(8*p + 4*4/4 + 4/2 + e)].out++ --> Channel --> Node[int(e*4/2 + s + 32)].in++;
 			Node[int(8*p + 4*4/4 + 4/2 + e)].in++ <-- Channel <-- Node[int(e*4/2 + s + 32)].out++;
